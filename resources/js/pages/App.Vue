@@ -45,8 +45,7 @@ export default {
         drawer:false,
       selectedItem: 1,
       items: [
-        { text: 'Send', icon: 'mdi-clock',to: '/' },
-        { text: 'List', icon: 'mdi-account',to:'list' },
+        { text: 'List', icon: 'mdi-account',to:'/' },
 
       ],
      })

@@ -4,7 +4,10 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Validator;
-
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Queue\Events\JobProcessed;
+use Log;
+use App\Models\Email;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -32,5 +35,28 @@ class AppServiceProvider extends ServiceProvider
                 return false;
             }
         });
+
+        Queue::after(function (JobProcessed $event) {
+            // $event->connectionName
+            // $event->job
+            $job= json_decode($event->job->getRawBody(),true);
+            //$result = array_keys(json_decode($event->job->getRawBody(), true)['data']['command']);
+            $mail = (unserialize(json_decode($event->job->getRawBody(), true)['data']['command']));
+            foreach($mail as $r){
+
+                Log::info($r);
+            }
+            Log::info($mail->mail['id_email']);
+            $email = Email::find($mail->mail['id_email']);
+            if ($email){
+                if ($email->status=="Posted"){
+                    $email->status="Sent";
+                    $email->save();
+                }
+
+            }
+
+        });
+
     }
 }

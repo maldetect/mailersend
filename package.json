@@ -10,13 +10,15 @@
     "watch-poll": "mix watch -- --watch-options-poll=1000"
   },
   "dependencies": {
+    "vue-infinite-loading": "^2.4.5",
     "vue-router": "^3.5.1",
+    "vue-timeago": "^5.1.3",
     "vuelidate": "^0.7.6",
     "vuetify": "^2.4.0"
   },
   "devDependencies": {
     "@mdi/font": "^5.9.55",
-    "axios": "^0.21",
+    "axios": "^0.21.1",
     "bootstrap": "^4.0.0",
     "browser-sync": "^2.26.14",
     "browser-sync-webpack-plugin": "^2.2.2",

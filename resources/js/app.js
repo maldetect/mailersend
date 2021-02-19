@@ -2,22 +2,15 @@ import Vue from 'vue'
 import Vuetify from 'vuetify'
 import "../sass/app.scss";
 import App from './pages/App'
-import Router from 'vue-router'
-import Send from './pages/Send'
+import router from './router'
 
-Vue.use(Router)
+import VueTimeago from 'vue-timeago'
 
-const router = new Router({
-  mode: 'history',
-  routes: [
-    {
-      path: '/',
-      name: 'send',
-      component: Send
-    },
-  ]
+Vue.use(VueTimeago, {
+  name: 'Timeago', // Component name, `Timeago` by default
+  locale: 'en', // Default locale
+
 })
-
 
 Vue.use(Vuetify)
 

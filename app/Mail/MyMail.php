@@ -40,7 +40,7 @@ class MyMail extends Mailable implements ShouldQueue
             }
         }
 
-        return $response->markdown('emails.mail');
+        return $response->view('vendor.mail.html.layout');
 
     }
 }
