@@ -61,6 +61,23 @@ describe("List.vue", () => {
         expect(wrapper.vm.$data.offset).toBe(1);
     });
 
+    it("no more emails to load", async () => {
+        const wrapper = shallowMount(List, {
+            localVue,
+            vuetify
+        });
+        axios.get.mockResolvedValue({ data: { success: "true", data: [] } });
+        const state = {
+            complete: () => {},
+            loaded: () => {}
+        };
+        await wrapper.vm.infiniteHandler(state);
+        expect(axios.get).toHaveBeenCalledTimes(1);
+        expect(axios.get).toHaveBeenCalledWith("/api/list/0/");
+        expect(wrapper.vm.$data.emails.length).toBe(0);
+        expect(wrapper.vm.$data.offset).toBe(0);
+    });
+
     it("get error when load emails", async () => {
         const wrapper = shallowMount(List, {
             localVue,

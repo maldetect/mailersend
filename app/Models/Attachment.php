@@ -21,5 +21,9 @@ class Attachment extends Model
         'emails_id_email'
 
 
-        ];
+    ];
+    public function email()
+    {
+        return $this->belongsTo('App\Models\Email', 'emails_id_email');
+    }
 }

@@ -2,9 +2,11 @@
 
 namespace Tests\Unit;
 
+use App\Jobs\SendEmail;
 use App\Mail\MyMail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 use Mail;
 
@@ -44,11 +46,26 @@ class MyMailTest extends TestCase
     public function test_email_successful_queued()
     {
         Mail::fake();
-
-        $response = $this->post('/api/send', $this->mail);
+        $mail = $this->mail;
+        $response = $this->post('/api/send', $mail);
         $response->assertStatus(200);
 
         Mail::assertQueued(MyMail::class);
+    }
+
+    public function test_email_dispatched()
+    {
+        Queue::fake();
+        $mail = $this->mail;
+        SendEmail::dispatch($this->mail)->onQueue('email');
+
+        Queue::assertPushedOn('email', SendEmail::class);
+        Queue::assertPushed(function (SendEmail $job) use ($mail) {
+            $json = json_encode($mail);
+            $json2 = json_encode($job->mail);
+
+            return $json == $json2;
+        });
     }
 
     public function test_post_more_than_one_email_queued()
@@ -57,9 +74,9 @@ class MyMailTest extends TestCase
         $mail1 = $this->mail;
         $mail2 = $this->mail;
 
-        $mail1['mail'][0]['subject']="mail1";
-        $mail2['mail'][0]['subject']="mail2";
-        array_push($mail1['mail'],$mail2['mail'][0]);
+        $mail1['mail'][0]['subject'] = "mail1";
+        $mail2['mail'][0]['subject'] = "mail2";
+        array_push($mail1['mail'], $mail2['mail'][0]);
         $response = $this->post('/api/send', $mail1);
         $response->assertStatus(200);
 
@@ -151,9 +168,10 @@ class MyMailTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertExactJson(['errors' =>
-            ['mail.0.attachments.0.base64' => [0 => 'validation.base64'],
+        [
+            'mail.0.attachments.0.base64' => [0 => 'validation.base64'],
 
-    ],'success'=>'false']);
+        ], 'success' => 'false']);
     }
 
     public function test_list_jobs()
@@ -163,9 +181,7 @@ class MyMailTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
-            'data' ,  'success'
+            'data',  'success'
         ]);
     }
-
-
 }
