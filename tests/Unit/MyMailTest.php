@@ -21,8 +21,10 @@ class MyMailTest extends TestCase
             'mail' => [
                 0 => [
                     'subject' => 'subject from test',
-                    'email_address' => 'test@test.com',
-                    'body' => 'body test',
+                    'from' => 'from@test.com',
+                    'to' => 'to@test.com',
+                    'text_content' => 'text content',
+                    'html_content' => 'HTML content',
                     'attachments' => [
                         0 => [
                             'base64' => base64_encode('dfsgdfFgsdfgbxcvTRT'),
@@ -43,7 +45,7 @@ class MyMailTest extends TestCase
     {
         Mail::fake();
 
-        $response = $this->post('/api/send?api_token=token', $this->mail);
+        $response = $this->post('/api/send', $this->mail);
         $response->assertStatus(200);
 
         Mail::assertQueued(MyMail::class);
@@ -58,7 +60,7 @@ class MyMailTest extends TestCase
         $mail1['mail'][0]['subject']="mail1";
         $mail2['mail'][0]['subject']="mail2";
         array_push($mail1['mail'],$mail2['mail'][0]);
-        $response = $this->post('/api/send?api_token=token', $mail1);
+        $response = $this->post('/api/send', $mail1);
         $response->assertStatus(200);
 
         Mail::assertQueued(MyMail::class);
@@ -68,18 +70,18 @@ class MyMailTest extends TestCase
     {
         $mail = $this->mail;
         unset($mail['mail'][0]['subject']);
-        $response = $this->post('/api/send?api_token=token', $mail);
+        $response = $this->post('/api/send', $mail);
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['mail.0.subject']);
     }
 
-    public function test_email_address_is_required()
+    public function test_from_is_required()
     {
         $mail = $this->mail;
-        unset($mail['mail'][0]['email_address']);
-        $response = $this->post('/api/send?api_token=token', $mail);
+        unset($mail['mail'][0]['from']);
+        $response = $this->post('/api/send', $mail);
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['mail.0.email_address']);
+        $response->assertJsonValidationErrors(['mail.0.from']);
     }
 
     public function test_email_without_attachments_queued()
@@ -88,7 +90,7 @@ class MyMailTest extends TestCase
         $mail = $this->mail;
         unset($mail['mail'][0]['attachments']);
 
-        $response = $this->post('/api/send?api_token=token', $mail);
+        $response = $this->post('/api/send', $mail);
         $response->assertStatus(200);
 
         Mail::assertQueued(MyMail::class);
@@ -98,7 +100,7 @@ class MyMailTest extends TestCase
     {
         $mail = $this->mail;
         unset($mail['mail'][0]['attachments'][0]['filename']);
-        $response = $this->post('/api/send?api_token=token', $mail);
+        $response = $this->post('/api/send', $mail);
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['mail.0.attachments.0.filename']);
     }
@@ -107,12 +109,37 @@ class MyMailTest extends TestCase
     {
         $mail = $this->mail;
         unset($mail['mail'][0]['attachments'][0]['base64']);
-        $response = $this->post('/api/send?api_token=token', $mail);
+        $response = $this->post('/api/send', $mail);
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['mail.0.attachments.0.base64']);
     }
 
+    public function test_to_is_required()
+    {
+        $mail = $this->mail;
+        unset($mail['mail'][0]['to']);
+        $response = $this->post('/api/send', $mail);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['mail.0.to']);
+    }
 
+    public function test_text_content_is_required()
+    {
+        $mail = $this->mail;
+        unset($mail['mail'][0]['text_content']);
+        $response = $this->post('/api/send', $mail);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['mail.0.text_content']);
+    }
+
+    public function test_html_content_is_required()
+    {
+        $mail = $this->mail;
+        unset($mail['mail'][0]['html_content']);
+        $response = $this->post('/api/send', $mail);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['mail.0.html_content']);
+    }
 
 
 
@@ -120,7 +147,7 @@ class MyMailTest extends TestCase
     {
         $mail = $this->mail;
         $mail['mail'][0]['attachments'][0]['base64'] = "#%8sd%76";
-        $response = $this->post('/api/send?api_token=token', $mail);
+        $response = $this->post('/api/send', $mail);
 
         $response->assertStatus(422);
         $response->assertExactJson(['errors' =>
@@ -132,11 +159,11 @@ class MyMailTest extends TestCase
     public function test_list_jobs()
     {
 
-        $response = $this->get('/api/list');
+        $response = $this->get('/api/list/0/');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
-            'completed' ,  'pending'
+            'data' ,  'success'
         ]);
     }
 
