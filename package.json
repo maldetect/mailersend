@@ -10,7 +10,7 @@
     "watch-poll": "mix watch -- --watch-options-poll=1000",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:covarege": "jest --collectCoverage"
+    "test:coverage": "jest --collectCoverage"
   },
   "jest": {
     "moduleFileExtensions": [

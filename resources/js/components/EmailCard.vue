@@ -21,19 +21,23 @@
                 </v-list-item-content>
             </v-list-item>
             <Attachment :attachments.sync="email.attachments"></Attachment>
-
         </v-card-text>
     </v-card>
 </template>
 <script>
-import Attachment from './Attachment'
+import Attachment from "./Attachment";
 export default {
-  components: { Attachment },
+    components: { Attachment },
     name: "CardEmail",
 
     data() {
         return {};
     },
-    props: ["email"]
+    props: {
+        email: {
+            type: Object,
+            required: true
+        }
+    }
 };
 </script>
