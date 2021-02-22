@@ -2,7 +2,7 @@
     <v-row align="center" justify="center">
         <v-col cols="12">
             <v-card :loading="loading" class="elevation-12 ">
-                <v-toolbar color="grey lighten-2 " dark flat>
+                <v-toolbar color="grey lighten-2 " flat>
                     <v-toolbar-title class="black--text"
                         >Emails</v-toolbar-title
                     >
@@ -12,6 +12,7 @@
                         hide-details
                         prepend-icon="search"
                         single-line
+                        colo
                         v-model="search"
                         @keyup.enter.prevent="actionSearch"
                     ></v-text-field>
