@@ -1,6 +1,6 @@
 <template>
     <div>
-        <p v-if="attachments.length == 0"><strong>No Attachments</strong></p>
+        <p v-if="!hasAttachment"><strong>No Attachments</strong></p>
         <p v-else><strong>Attachments</strong></p>
         <div
             style="display:inline"
@@ -28,6 +28,11 @@ export default {
         attachments: {
             type: Array,
             required: true
+        }
+    },
+    computed: {
+        hasAttachment() {
+            return this.attachments.length > 0;
         }
     },
     methods: {

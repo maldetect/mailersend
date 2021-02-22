@@ -4,11 +4,14 @@ namespace Tests\Unit;
 
 use App\Jobs\SendEmail;
 use App\Mail\MyMail;
+use App\Models\Email;
+use App\Models\Attachment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 use Mail;
+use DB;
 
 class MyMailTest extends TestCase
 {
@@ -48,7 +51,10 @@ class MyMailTest extends TestCase
         Mail::fake();
         $mail = $this->mail;
         $response = $this->post('/api/send', $mail);
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => 'true', 'message' => 'Dispatched emails'
+            ]);
 
         Mail::assertQueued(MyMail::class);
     }
@@ -56,16 +62,55 @@ class MyMailTest extends TestCase
     public function test_email_dispatched()
     {
         Queue::fake();
+
         $mail = $this->mail;
-        SendEmail::dispatch($this->mail)->onQueue('email');
+        $mail['mail'][0]['status'] = 'Posted';
+        $email = Email::create($mail['mail'][0]);
+        $mail['mail'][0]['id_email'] = $email->id_email;
+
+        SendEmail::dispatch($mail['mail'][0])->onQueue('email');
 
         Queue::assertPushedOn('email', SendEmail::class);
         Queue::assertPushed(function (SendEmail $job) use ($mail) {
-            $json = json_encode($mail);
+            $json = json_encode($mail['mail'][0]);
+
             $json2 = json_encode($job->mail);
 
             return $json == $json2;
         });
+    }
+
+    public function test_email_failed()
+    {
+        Queue::fake();
+
+        $mail = $this->mail;
+        $mail['mail'][0]['status'] = 'Posted';
+        $email = Email::create($mail['mail'][0]);
+        $mail['mail'][0]['id_email'] = $email->id_email;
+
+        SendEmail::dispatch($mail['mail'][0])->onQueue('email');
+
+
+
+        Queue::assertPushedOn('email', SendEmail::class);
+        Queue::assertPushed(function (SendEmail $job) use ($mail) {
+            $job->failed(new \Exception());
+            $email = Email::findOrFail($job->mail['id_email']);
+
+            return $email->status == 'Failed';
+        });
+    }
+
+    public function test_email_build()
+    {
+        Mail::fake();
+
+        $mail = $this->mail;
+        $mail = new MyMail($this->mail['mail'][0]);
+
+
+        $this->assertInstanceOf(MyMail::class, $mail->build());
     }
 
     public function test_post_more_than_one_email_queued()
@@ -178,6 +223,17 @@ class MyMailTest extends TestCase
     {
 
         $response = $this->get('/api/list/0/');
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'data',  'success'
+        ]);
+    }
+
+    public function test_list_jobs_witch_search()
+    {
+
+        $response = $this->get('/api/list/0/from');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([

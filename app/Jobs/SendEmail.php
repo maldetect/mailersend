@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Mail;
 use Log;
 use Throwable;
 use App\Models\Email;
+
 class SendEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -51,9 +52,9 @@ class SendEmail implements ShouldQueue
     public function failed($exception)
     {
         $email = Email::find($this->mail['id_email']);
-        if ($email){
+        if ($email) {
             Log::info("troquei status do job");
-            $email->status="Failed";
+            $email->status = "Failed";
             $email->save();
         }
         Log::info("falhou o job");
