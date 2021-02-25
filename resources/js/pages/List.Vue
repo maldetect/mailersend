@@ -21,7 +21,7 @@
                         v-for="email in emails"
                         :key="email.id_email"
                         class="mt-2"
-                        :email.sync="email"
+                        :email="email"
                     ></CardEmail>
 
                     <infinite-loading
