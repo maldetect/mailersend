@@ -19,16 +19,16 @@ class SendEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $mail;
+    public $email;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($mail)
+    public function __construct($email)
     {
-        $this->mail = $mail;
+        $this->email = $email;
     }
 
     /**
@@ -38,8 +38,8 @@ class SendEmail implements ShouldQueue
      */
     public function handle()
     {
-        Mail::to($this->mail['to'])
-            ->send(new MyMail($this->mail));
+        Mail::to($this->email->to)
+            ->send(new MyMail($this->email));
         Log::info('Emailed ');
     }
 
@@ -51,12 +51,8 @@ class SendEmail implements ShouldQueue
      */
     public function failed($exception)
     {
-        $email = Email::find($this->mail['id_email']);
-        if ($email) {
-            Log::info("troquei status do job");
-            $email->status = "Failed";
-            $email->save();
-        }
-        Log::info("falhou o job");
+        Log::info("Failed email. " . $this->email->id_email);
+        $this->email->status = config('constants.STATUS_EMAIL.FAILED');
+        $this->email->save();
     }
 }

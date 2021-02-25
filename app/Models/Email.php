@@ -23,10 +23,27 @@ class Email extends Model
         'html_content',
         'status'
 
-        ];
+    ];
 
-    public function attachments(){
-        return $this->hasMany('App\Models\Attachment','emails_id_email');
+    public function attachments()
+    {
+        return $this->hasMany('App\Models\Attachment', 'emails_id_email');
     }
 
+    public function scopeSearch($query, $search)
+    {
+        return $query->where('to', 'ilike', '%' . $search . '%')
+            ->orWhere('from', 'ilike', '%' . $search . '%')
+            ->orWhere('subject', 'ilike', '%' . $search . '%');
+    }
+
+    public function scopePages($query, $offset)
+    {
+        return $query->offset($offset * 5)->limit(5);
+    }
+
+    public function isPosted()
+    {
+        return $this->status == config('constants.STATUS_EMAIL.POSTED');
+    }
 }

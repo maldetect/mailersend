@@ -12,7 +12,6 @@
                         hide-details
                         prepend-icon="search"
                         single-line
-                        colo
                         v-model="search"
                         @keyup.enter.prevent="actionSearch"
                     ></v-text-field>

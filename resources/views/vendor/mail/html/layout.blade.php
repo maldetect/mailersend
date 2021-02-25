@@ -38,8 +38,8 @@ width: 100% !important;
 <!-- Body content -->
 <tr>
 <td class="content-cell">
-{{$mail['text_content']}}
-{!!$mail['html_content'] !!}
+{{$email->text_content}}
+{!!$email->html_content !!}
 
 {{ $subcopy ?? '' }}
 </td>

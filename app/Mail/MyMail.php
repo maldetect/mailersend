@@ -11,7 +11,7 @@ class MyMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public $mail;
+    public $email;
 
     /**
      * Create a new message instance.
@@ -21,9 +21,9 @@ class MyMail extends Mailable implements ShouldQueue
 
 
 
-    public function __construct($mail)
+    public function __construct($email)
     {
-        $this->mail = $mail;
+        $this->email = $email;
     }
 
     /**
@@ -33,10 +33,11 @@ class MyMail extends Mailable implements ShouldQueue
      */
     public function build()
     {
-        $response = $this->from($this->mail['from'])->subject($this->mail['subject']);
-        if (array_key_exists('attachments', $this->mail)) {
-            foreach ($this->mail['attachments'] as $attachment) {
-                $response->attachData(base64_decode($attachment['base64']), $attachment['filename']);
+        $response = $this->from($this->email->from)
+            ->subject($this->email->subject);
+        if ($this->email->attachments) {
+            foreach ($this->email->attachments as $attachment) {
+                $response->attachData(base64_decode($attachment->base64), $attachment->filename);
             }
         }
 

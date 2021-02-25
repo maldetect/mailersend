@@ -11,6 +11,7 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 use Mail;
+use App\Services\EmailService;
 use DB;
 
 class MyMailTest extends TestCase
@@ -50,7 +51,9 @@ class MyMailTest extends TestCase
     {
         Mail::fake();
         $mail = $this->mail;
-        $response = $this->post('/api/send', $mail);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->post('/api/send', $mail);
         $response->assertStatus(200)
             ->assertJson([
                 'success' => 'true', 'message' => 'Dispatched emails'
@@ -64,17 +67,15 @@ class MyMailTest extends TestCase
         Queue::fake();
 
         $mail = $this->mail;
-        $mail['mail'][0]['status'] = 'Posted';
-        $email = Email::create($mail['mail'][0]);
-        $mail['mail'][0]['id_email'] = $email->id_email;
+        $email = EmailService::store($mail['mail'][0]);
 
-        SendEmail::dispatch($mail['mail'][0])->onQueue('email');
+        SendEmail::dispatch($email)->onQueue('email');
 
         Queue::assertPushedOn('email', SendEmail::class);
-        Queue::assertPushed(function (SendEmail $job) use ($mail) {
-            $json = json_encode($mail['mail'][0]);
+        Queue::assertPushed(function (SendEmail $job) use ($email) {
+            $json = json_encode($email);
 
-            $json2 = json_encode($job->mail);
+            $json2 = json_encode($job->email);
 
             return $json == $json2;
         });
@@ -85,20 +86,15 @@ class MyMailTest extends TestCase
         Queue::fake();
 
         $mail = $this->mail;
-        $mail['mail'][0]['status'] = 'Posted';
-        $email = Email::create($mail['mail'][0]);
-        $mail['mail'][0]['id_email'] = $email->id_email;
+        $email = EmailService::store($mail['mail'][0]);
 
-        SendEmail::dispatch($mail['mail'][0])->onQueue('email');
-
-
+        SendEmail::dispatch($email)->onQueue('email');
 
         Queue::assertPushedOn('email', SendEmail::class);
         Queue::assertPushed(function (SendEmail $job) use ($mail) {
             $job->failed(new \Exception());
-            $email = Email::findOrFail($job->mail['id_email']);
 
-            return $email->status == 'Failed';
+            return $job->email->status == config('constants.STATUS_EMAIL.FAILED');
         });
     }
 
@@ -107,7 +103,8 @@ class MyMailTest extends TestCase
         Mail::fake();
 
         $mail = $this->mail;
-        $mail = new MyMail($this->mail['mail'][0]);
+        $email = EmailService::store($mail['mail'][0]);
+        $mail = new MyMail($email);
 
 
         $this->assertInstanceOf(MyMail::class, $mail->build());
@@ -122,7 +119,9 @@ class MyMailTest extends TestCase
         $mail1['mail'][0]['subject'] = "mail1";
         $mail2['mail'][0]['subject'] = "mail2";
         array_push($mail1['mail'], $mail2['mail'][0]);
-        $response = $this->post('/api/send', $mail1);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->post('/api/send', $mail1);
         $response->assertStatus(200);
 
         Mail::assertQueued(MyMail::class);
@@ -132,7 +131,9 @@ class MyMailTest extends TestCase
     {
         $mail = $this->mail;
         unset($mail['mail'][0]['subject']);
-        $response = $this->post('/api/send', $mail);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->post('/api/send', $mail);
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['mail.0.subject']);
     }
@@ -141,7 +142,9 @@ class MyMailTest extends TestCase
     {
         $mail = $this->mail;
         unset($mail['mail'][0]['from']);
-        $response = $this->post('/api/send', $mail);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->post('/api/send', $mail);
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['mail.0.from']);
     }
@@ -152,7 +155,9 @@ class MyMailTest extends TestCase
         $mail = $this->mail;
         unset($mail['mail'][0]['attachments']);
 
-        $response = $this->post('/api/send', $mail);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->post('/api/send', $mail);
         $response->assertStatus(200);
 
         Mail::assertQueued(MyMail::class);
@@ -162,7 +167,9 @@ class MyMailTest extends TestCase
     {
         $mail = $this->mail;
         unset($mail['mail'][0]['attachments'][0]['filename']);
-        $response = $this->post('/api/send', $mail);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->post('/api/send', $mail);
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['mail.0.attachments.0.filename']);
     }
@@ -171,7 +178,9 @@ class MyMailTest extends TestCase
     {
         $mail = $this->mail;
         unset($mail['mail'][0]['attachments'][0]['base64']);
-        $response = $this->post('/api/send', $mail);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->post('/api/send', $mail);
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['mail.0.attachments.0.base64']);
     }
@@ -180,7 +189,9 @@ class MyMailTest extends TestCase
     {
         $mail = $this->mail;
         unset($mail['mail'][0]['to']);
-        $response = $this->post('/api/send', $mail);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->post('/api/send', $mail);
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['mail.0.to']);
     }
@@ -189,7 +200,9 @@ class MyMailTest extends TestCase
     {
         $mail = $this->mail;
         unset($mail['mail'][0]['text_content']);
-        $response = $this->post('/api/send', $mail);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->post('/api/send', $mail);
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['mail.0.text_content']);
     }
@@ -198,7 +211,9 @@ class MyMailTest extends TestCase
     {
         $mail = $this->mail;
         unset($mail['mail'][0]['html_content']);
-        $response = $this->post('/api/send', $mail);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->post('/api/send', $mail);
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['mail.0.html_content']);
     }
@@ -209,14 +224,16 @@ class MyMailTest extends TestCase
     {
         $mail = $this->mail;
         $mail['mail'][0]['attachments'][0]['base64'] = "#%8sd%76";
-        $response = $this->post('/api/send', $mail);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->post('/api/send', $mail);
 
         $response->assertStatus(422);
         $response->assertExactJson(['errors' =>
         [
             'mail.0.attachments.0.base64' => [0 => 'validation.base64'],
 
-        ], 'success' => 'false']);
+        ], "message" => "The given data was invalid."]);
     }
 
     public function test_list_jobs()

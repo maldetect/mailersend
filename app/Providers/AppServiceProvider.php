@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Queue\Events\JobProcessed;
 use Log;
 use App\Models\Email;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -37,26 +38,15 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Queue::after(function (JobProcessed $event) {
-            // $event->connectionName
-            // $event->job
-            $job= json_decode($event->job->getRawBody(),true);
-            //$result = array_keys(json_decode($event->job->getRawBody(), true)['data']['command']);
+
+            $job = json_decode($event->job->getRawBody(), true);
             $mail = (unserialize(json_decode($event->job->getRawBody(), true)['data']['command']));
-            foreach($mail as $r){
-
-                Log::info($r);
+            Log::info($mail->email['id_email']);
+            $email = Email::findOrFail($mail->email['id_email']);
+            if ($email->isPosted()) {
+                $email->status = config("constants.STATUS_EMAIL.SENT");
+                $email->save();
             }
-            Log::info($mail->mail['id_email']);
-            $email = Email::find($mail->mail['id_email']);
-            if ($email){
-                if ($email->status=="Posted"){
-                    $email->status="Sent";
-                    $email->save();
-                }
-
-            }
-
         });
-
     }
 }
